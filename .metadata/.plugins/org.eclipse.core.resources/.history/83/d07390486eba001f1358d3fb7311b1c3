@@ -1,0 +1,115 @@
+package com.proyecto.controller;
+
+import com.proyecto.models.Libro;
+import com.proyecto.service.LibroService;
+import com.proyecto.models.Editorial;
+
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.io.ByteArrayOutputStream;
+import java.util.List;
+
+@RestController
+@CrossOrigin(origins = "http://localhost:4200")
+@RequestMapping("/reportes")
+public class ReporteLibroController {
+
+    @Autowired
+    private LibroService libroService;
+
+    @GetMapping(value = "/libros", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> generarReporteLibros() {
+        try {
+            List<Libro> libros = libroService.listarTodos();
+
+            // Crear el documento PDF
+            PDDocument document = new PDDocument();
+            PDPage page = new PDPage(PDRectangle.A4);
+            document.addPage(page);
+
+            // Establecer el flujo de contenido del PDF
+            PDPageContentStream contentStream = new PDPageContentStream(document, page);
+            contentStream.setFont(PDType1Font.HELVETICA_BOLD, 14);
+            contentStream.beginText();
+            contentStream.setLeading(16.5f);
+            contentStream.newLineAtOffset(50, 800); // Comienza a escribir desde la coordenada (50, 750)
+
+            // Escribir el título
+            contentStream.showText("Reporte de Libros");
+            contentStream.newLine();
+            contentStream.showText("===========================================");
+            contentStream.newLine();
+            contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12);
+            contentStream.showText("Listado de Libros Registrados");
+            contentStream.newLine();
+            contentStream.showText("===========================================");
+            contentStream.newLine();
+            contentStream.newLine();
+
+            // Escribir el encabezado de la tabla
+            contentStream.setFont(PDType1Font.HELVETICA_BOLD, 10);
+            contentStream.showText(String.format("%-5s | %-20s | %-20s | %-20s | %-10s | %-15s | %-15s", 
+                    "ID", "Nombre", "Autor", "País", "Stock", "Fecha Restock", "Editoriales"));
+            contentStream.newLine();
+            contentStream.showText("-------------------------------------------------------------------------------------------------------------");
+            contentStream.newLine();
+
+            // Escribir los datos de los libros de manera alineada
+            contentStream.setFont(PDType1Font.HELVETICA, 10);
+            for (Libro libro : libros) {
+                String editoriales = libro.getEditoriales() != null && !libro.getEditoriales().isEmpty()
+                        ? String.join(", ", getEditorialNames(libro.getEditoriales()))
+                        : "N/A";
+                contentStream.showText(String.format("%-5s | %-20s | %-10s | %-20s | %-10d | %-5s | %-15s", 
+                        libro.getId(),
+                        libro.getNombre(),
+                        libro.getAutor(),
+                        libro.getPais(),
+                        libro.getStock(),
+                        libro.getFechaRestock() != null ? libro.getFechaRestock().toString() : "N/A",
+                        editoriales));
+                contentStream.newLine();
+            }
+
+            contentStream.endText();
+            contentStream.close();
+
+            // Guardar el documento en un byte array
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            document.save(baos);
+            document.close();
+
+            // Configurar la respuesta HTTP
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("filename", "reporte_libros.pdf");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(baos.toByteArray());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // Método para obtener los nombres de las editoriales
+    private List<String> getEditorialNames(List<Editorial> editoriales) {
+        return editoriales.stream()
+                .map(Editorial::getNombre)
+                .toList();
+    }
+}
+

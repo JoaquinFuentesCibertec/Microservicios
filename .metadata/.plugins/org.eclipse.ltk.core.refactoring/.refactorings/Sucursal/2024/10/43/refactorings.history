@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Copy element &apos;Mantenimiento.java&apos; to &apos;Compilador/src/main/java/com.proyecto.models&apos;&#x0D;&#x0A;- Original project: &apos;Sucursal&apos;&#x0D;&#x0A;- Destination element: &apos;Compilador/src/main/java/com.proyecto.models&apos;&#x0D;&#x0A;- Original element: &apos;com.proyecto.mantenimiento.Mantenimiento.java&apos;" description="Copy compilation unit" destination="=Compilador/src\/main\/java=/optional=/true=/=/maven.pomderived=/true=/&lt;com.proyecto.models" element1="/src\/main\/java=/optional=/true=/=/maven.pomderived=/true=/&lt;com.proyecto.mantenimiento{Mantenimiento.java" files="0" flags="589830" folders="0" id="org.eclipse.jdt.ui.copy" policy="org.eclipse.jdt.ui.copyResources" stamp="1729868931184" units="1" version="1.0"/>
+</session>

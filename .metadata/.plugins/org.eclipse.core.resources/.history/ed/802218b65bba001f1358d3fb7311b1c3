@@ -1,0 +1,50 @@
+package com.proyecto.service;
+
+import com.proyecto.FeignClient.ClienteFeignClient;
+import com.proyecto.models.Cliente;
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.ui.Model;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.List;
+
+@Service
+public class ReporteClienteService {
+
+    @Autowired
+    private ClienteFeignClient clienteFeignClient;  // ClienteFeignClient se utiliza para obtener los datos de los clientes
+
+    @Autowired
+    private TemplateEngine templateEngine;  // Motor de plantillas Thymeleaf
+
+    public byte[] generarReporteClientes() throws IOException {
+        // Obtener todos los clientes desde el microservicio correspondiente
+        List<Cliente> clientes = clienteFeignClient.listarTodos();
+
+        // Crear el contexto para Thymeleaf y agregar los datos
+        Context context = new Context();
+        context.setVariable("clientes", clientes);
+
+        // Renderizar el HTML con Thymeleaf
+        String htmlContent = templateEngine.process("reporte_clientes", context);
+
+        // Convertir el HTML generado a PDF
+        return convertirHtmlAPdf(htmlContent);
+    }
+
+    private byte[] convertirHtmlAPdf(String htmlContent) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        builder.withHtmlContent(htmlContent, null);
+        builder.toStream(outputStream);
+        builder.run();
+        return outputStream.toByteArray();
+    }
+}

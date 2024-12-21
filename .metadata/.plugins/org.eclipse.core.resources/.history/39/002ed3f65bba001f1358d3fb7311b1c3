@@ -1,0 +1,28 @@
+package com.proyecto.controller;
+
+import com.proyecto.models.Cliente;
+import com.proyecto.service.ReporteClienteService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.io.ByteArrayOutputStream;
+
+@RestController
+@RequestMapping("/api")
+public class ReporteClienteController {
+
+    @Autowired
+    private ReporteClienteService reporteService;
+
+    @GetMapping("/reportes/clientes")
+    public byte[] generarReporteClientes() {
+        try {
+            return reporteService.generarReporteClientes();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new byte[0];
+        }
+    }
+}

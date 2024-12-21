@@ -1,0 +1,134 @@
+package com.proyecto.controller;
+
+import com.proyecto.models.Cliente;
+import com.proyecto.service.ClienteService;
+
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.io.ByteArrayOutputStream;
+import java.util.List;
+
+@RestController
+@RequestMapping("/reportes")
+public class ReporteClienteController {
+
+    @Autowired
+    private ClienteService clienteService;
+
+    @GetMapping(value = "/clientes", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> generarReporteClientes() {
+        try {
+            List<Cliente> clientes = clienteService.listarTodos();
+
+            // Crear el documento PDF
+            PDDocument document = new PDDocument();
+            PDPage page = new PDPage();
+            document.addPage(page);
+
+            // Crear el flujo de contenido para escribir en el PDF
+            PDPageContentStream contentStream = new PDPageContentStream(document, page);
+            
+            // Dibuja una línea horizontal para el encabezado (antes de comenzar el bloque de texto)
+            contentStream.setLineWidth(0.5f);
+            contentStream.moveTo(50, 730);
+            contentStream.lineTo(550, 730);
+            contentStream.stroke();
+
+            // Comienza el bloque de texto
+            contentStream.beginText();
+            contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12);
+            contentStream.setLeading(14.5f);
+            contentStream.newLineAtOffset(50, 750);
+
+            // Título del reporte
+            contentStream.showText("Reporte de Clientes");
+            contentStream.newLine();
+            contentStream.newLine();
+
+            // Agregar encabezados de tabla
+            contentStream.setFont(PDType1Font.HELVETICA_BOLD, 10);
+            contentStream.showText("ID       Nombre           Apellido       Dirección       Correo");
+            contentStream.newLine();
+            
+            // Dibuja una línea horizontal después del encabezado (después de escribir texto)
+            contentStream.moveTo(50, 715);
+            contentStream.lineTo(550, 715);
+            contentStream.stroke();
+            
+            // Establecer la fuente para los datos de los clientes
+            contentStream.setFont(PDType1Font.HELVETICA, 10);
+
+            // Escribir los datos de los clientes en la tabla
+            float yStart = 710;
+            float yPosition = yStart;
+            float rowHeight = 20f;
+            float cellMargin = 5f;
+            float tableWidth = 500f;
+            float[] columnsWidth = {50f, 150f, 150f, 150f, 150f}; // Ancho de las columnas
+
+            for (Cliente cliente : clientes) {
+                if (yPosition < 100) {
+                    // Nueva página si se alcanza el límite inferior
+                    page = new PDPage();
+                    document.addPage(page);
+                    contentStream = new PDPageContentStream(document, page);
+                    contentStream.setFont(PDType1Font.HELVETICA, 10);
+                    contentStream.beginText();
+                    contentStream.setLeading(14.5f);
+                    contentStream.newLineAtOffset(50, 750);
+                    contentStream.showText("Reporte de Clientes");
+                    contentStream.newLine();
+                    contentStream.newLine();
+                    yPosition = yStart;
+                }
+
+                // Escribir cada fila de datos
+                contentStream.beginText();
+                contentStream.newLineAtOffset(50, yPosition);
+                contentStream.showText(String.valueOf(cliente.getId()));
+                contentStream.newLineAtOffset(columnsWidth[0], 0);
+                contentStream.showText(cliente.getNombre());
+                contentStream.newLineAtOffset(columnsWidth[1], 0);
+                contentStream.showText(cliente.getApellidoPaterno() + " " + cliente.getApellidoMaterno());
+                contentStream.newLineAtOffset(columnsWidth[2], 0);
+                contentStream.showText(cliente.getDireccion());
+                contentStream.newLineAtOffset(columnsWidth[3], 0);
+                contentStream.showText(cliente.getCorreo());
+                contentStream.endText();
+                yPosition -= rowHeight;
+            }
+
+            contentStream.endText();
+            contentStream.close();
+
+            // Convertir el documento a un byte array
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            document.save(baos);
+            document.close();
+
+            // Configurar la respuesta HTTP
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("filename", "reporte_clientes.pdf");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(baos.toByteArray());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+}
+
+

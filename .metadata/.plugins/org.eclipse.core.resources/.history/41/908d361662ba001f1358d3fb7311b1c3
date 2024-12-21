@@ -1,0 +1,84 @@
+package com.proyecto.controller;
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfWriter;
+import com.proyecto.models.Cliente;
+import com.proyecto.service.ClienteService;
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.List;
+
+@RestController
+@CrossOrigin(origins = "http://localhost:4200")
+@RequestMapping("/api")
+public class ReporteClienteController {
+
+    @Autowired
+    private ClienteService clienteService;
+
+    @GetMapping("/reporte")
+    public String generarReporte(Model model) {
+        // Obtiene la lista de clientes desde el servicio
+        List<Cliente> clientes = clienteService.listarTodos();
+
+        // Agrega la lista de clientes al modelo para que esté disponible en el template HTML
+        model.addAttribute("clientes", clientes);
+
+        // Retorna el nombre del template de Thymeleaf (reportecliente.html)
+        return "reportecliente";  // Esto debería apuntar a tu archivo reportecliente.html
+    }
+
+    @GetMapping("/reporte-pdf")
+    @ResponseBody
+    public byte[] generarReportePdf() throws IOException, DocumentException {
+        // Obtiene la lista de clientes desde el servicio
+        List<Cliente> clientes = clienteService.listarTodos();
+
+        // Genera el HTML con la lista de clientes (se puede usar un motor de plantillas como Thymeleaf)
+        String htmlContent = generarHtmlReporte(clientes);
+
+        // Convierte el HTML a PDF usando OpenHTML2PDF
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        builder.useFastMode();
+        builder.withHtmlContent(htmlContent, null); // Pasa el HTML generado
+        builder.toStream(baos); // Escribe el contenido al flujo de salida
+        builder.run();
+
+        // Retorna el PDF como respuesta
+        return baos.toByteArray();
+    }
+
+    private String generarHtmlReporte(List<Cliente> clientes) {
+        // Aquí puedes usar Thymeleaf para generar el HTML con los datos dinámicos
+        StringBuilder html = new StringBuilder();
+        html.append("<html><head><title>Reporte de Clientes</title></head><body>");
+        html.append("<h1>Reporte de Clientes</h1>");
+        html.append("<table border='1'><thead><tr><th>ID</th><th>Nombre</th><th>Apellido</th><th>Dirección</th><th>Correo</th></tr></thead><tbody>");
+        
+        for (Cliente cliente : clientes) {
+            html.append("<tr>")
+                .append("<td>").append(cliente.getId()).append("</td>")
+                .append("<td>").append(cliente.getNombre()).append("</td>")
+                .append("<td>").append(cliente.getApellidoPaterno()).append(" ").append(cliente.getApellidoMaterno()).append("</td>")
+                .append("<td>").append(cliente.getDireccion()).append("</td>")
+                .append("<td>").append(cliente.getCorreo()).append("</td>")
+                .append("</tr>");
+        }
+        
+        html.append("</tbody></table></body></html>");
+        
+        return html.toString();
+    }
+}
+

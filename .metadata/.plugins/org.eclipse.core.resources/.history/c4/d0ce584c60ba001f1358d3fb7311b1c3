@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Clientes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reporte de Clientes</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Dirección</th>
+                <th>Correo</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Aquí va la lista de clientes, puedes iterar con Thymeleaf si lo necesitas -->
+            <tr>
+                <td>1</td>
+                <td>Juan</td>
+                <td>Pérez</td>
+                <td>Calle Falsa 123</td>
+                <td>juan@mail.com</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Ana</td>
+                <td>García</td>
+                <td>Avenida Siempre Viva 456</td>
+                <td>ana@mail.com</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
